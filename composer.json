@@ -1,0 +1,13 @@
+{
+    "name": "monsieurbon/tiny",
+    "description": "A tiny PHP framework",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fabian Gut",
+            "email": "fabian.gut@ethy.ch"
+        }
+    ],
+    "require": {}
+}
