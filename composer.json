@@ -9,5 +9,23 @@
             "email": "fabian.gut@ethy.ch"
         }
     ],
-    "require": {}
+    "autoload": {
+        "psr-4": {
+            "Tiny\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^7.1",
+        "symfony/http-foundation": "^4.1",
+        "nikic/fast-route": "^1.3"
+    },
+    "require-dev": {
+        "ext-xdebug": "*",
+        "phpunit/phpunit": "^7.4"
+    },
+    "scripts": {
+        "test": [
+            "./vendor/bin/phpunit"
+        ]
+    }
 }

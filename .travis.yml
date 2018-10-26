@@ -1,0 +1,27 @@
+language: php
+php:
+  - 7.1
+
+addons:
+  sonarcloud:
+    organization: "monsieurbon-github"
+    token:
+      secure: "A6Nn0QP/yUJVLcUx9KW4S6kWMnoD77qIPnA++XPBylWnk3T9zwGfjNxCqo2hsHQSUodpFSVZ2dh5RH2h9J4nnpThj0MO6GYrQn5f0CQZaak/vtqNubMQdkXK2rja2Ojvifepr9F9GVzQeGmuflYoU23jZ10Oh/f2ZBRy4IngflC6mnnmQXRbF0P/ala27H2lx9PSDQ9O4g21+jDCGDB6tjVH/9ldEPiyajWy/1gU2+1LxGQSeldB9Hd+XoBqVV5+heuVeSB4n3tFXmrEvfoiYJmPeX5ugQCX1+GGoBQMQSVYxaKL+KXqOk/Cx5sstBMxfX35HXIRuu+9cWhq4Y9IdsLd9h6AfkpxiSyoKTPswhd4Ul5JN3GPWUAjKveY5U1xhUfa4Z6zFCVfB7Z8LOFjXSdmiYRtA8umO2uTQKcafxubFzQJoOx7JkkftAOyop193j+ZVcUfcf9gLgtPPFp2V9F9Z3NT3+3Xx2ekMaBJA0/uKKhlMYiMjVkS5RMZXqbUisFzuc0xBgsAA6L1V7Rwo5PVufo11a1b20yBdtPSdfvQXmNqT04IZ1/K1oqc6Py2LnEAKm01DfhDFuzNQFZOBG639IhraV7sfVRsBnxxvl3ugbyaPlbCuBm672ZdiOgUi7svAEb74+//oD0KmDOiD0Vv8ycQBFhvpGx1cD48kNc="
+
+notifications:
+  email:
+    on_success: never
+    on_failure: change
+
+before_install:
+  - composer self-update
+
+install:
+  - composer install
+
+script:
+  - phpunit --coverage-clover=coverage.xml
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+  - sonar-scanner
