@@ -35,15 +35,16 @@ class App
 
     public function run()
     {
-        list($accessLog, $errorLog) = $this->getLogger();
+        $request = Request::createFromGlobals();
+
+        $logDir = $this->getLogDir($request);
+        list($accessLog, $errorLog) = $this->getLogger($logDir);
 
         $dispatcher = simpleDispatcher(function (RouteCollector $r) {
             foreach ($this->routes as $route) {
                 $r->addRoute($route->getMethod(), $route->getRoute(), $route->getCallable());
             }
         });
-
-        $request = Request::createFromGlobals();
 
         $method = $request->getMethod();
         $uri = $request->getPathInfo();
@@ -75,20 +76,36 @@ class App
         $response->send();
     }
 
-    private function getLogger(): array
+    private function getLogger(string $logDir): array
     {
-        $accessLog = new Logger('request');
-        $errorLog = new Logger('handler');
+        $accessLog = new Logger('access');
+        $errorLog = new Logger('error');
 
         $dateFormat = "Y-m-d H:i:s";
         $output = "[%datetime%] %channel%.%level_name%: %message%\n";
         $accessFormatter = new LineFormatter($output, $dateFormat);
-        $accessHandler = new StreamHandler(__DIR__ . '/../var/log/access.log', Logger::INFO);
+        $accessHandler = new StreamHandler($logDir . '/access.log', Logger::INFO);
         $accessHandler->setFormatter($accessFormatter);
 
         $accessLog->pushHandler($accessHandler);
-        $errorLog->pushHandler(new StreamHandler(__DIR__ . '/../var/log/error.log', Logger::ERROR));
+        $errorLog->pushHandler(new StreamHandler($logDir . '/error.log', Logger::ERROR));
 
         return array($accessLog, $errorLog);
+    }
+
+    /**
+     * @param static $request
+     * @return string
+     */
+    private function getLogDir(Request $request): string
+    {
+        $documentRoot = $request->server->get('DOCUMENT_ROOT');
+
+        if ($documentRoot === null) {
+            $documentRoot = __DIR__;
+        }
+
+        $logDir = $documentRoot . '/../var/logs';
+        return $logDir;
     }
 }
