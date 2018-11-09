@@ -62,4 +62,19 @@ class AppTest extends TestCase
 
         $this->assertEquals($expectedResponse, $response);
     }
+
+    public function testInternalServerError() {
+        $request = Request::create('/foo');
+        $request->overrideGlobals();
+
+        $app = new App();
+        $app->get('/foo', function () {
+            throw new \Exception('foo');
+        });
+        ob_start();
+        $app->run();
+        $response = ob_get_clean();
+
+        $this->assertEquals('Internal Server Error', $response);
+    }
 }
