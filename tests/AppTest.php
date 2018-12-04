@@ -4,12 +4,19 @@
 namespace Tiny;
 
 
+use Monolog\Handler\NullHandler;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class AppTest extends TestCase
 {
+    public static function setUpBeforeClass()
+    {
+        LoggerFactory::getLogger('access')->pushHandler(new NullHandler());
+        LoggerFactory::getLogger('error')->pushHandler(new NullHandler());
+    }
+
     public function testNotFound() {
         $request = Request::create('/bar');
         $request->overrideGlobals();
