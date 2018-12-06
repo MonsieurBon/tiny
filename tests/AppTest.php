@@ -4,20 +4,25 @@
 namespace Tiny;
 
 
-use Monolog\Handler\NullHandler;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class AppTest extends TestCase
 {
-    public static function setUpBeforeClass()
+    private $postHandlerCalled = false;
+    /** @var TestHandler */
+    private $errorLogHandler = null;
+
+    public function setUp()
     {
-        LoggerFactory::getLogger('access')->pushHandler(new NullHandler());
-        LoggerFactory::getLogger('error')->pushHandler(new NullHandler());
+        $this->errorLogHandler = new TestHandler();
+        LoggerFactory::getLogger('access')->pushHandler(new TestHandler());
+        LoggerFactory::getLogger('error')->pushHandler($this->errorLogHandler);
     }
 
-    public function testNotFound() {
+    public function testNotFound()
+    {
         $request = Request::create('/bar');
         $request->overrideGlobals();
 
@@ -35,7 +40,8 @@ class AppTest extends TestCase
     /**
      * @runInSeparateProcess
      */
-    public function testNotAllowed() {
+    public function testNotAllowed()
+    {
         $request = Request::create('/bar');
         $request->overrideGlobals();
 
@@ -52,7 +58,8 @@ class AppTest extends TestCase
         $this->assertEquals('Method not allowed', $response);
     }
 
-    public function testHelloWorld() {
+    public function testHelloWorld()
+    {
         $expectedResponse = 'Hello Foo';
         $request = Request::create('/hello/Foo');
         $request->overrideGlobals();
@@ -70,7 +77,8 @@ class AppTest extends TestCase
         $this->assertEquals($expectedResponse, $response);
     }
 
-    public function testInternalServerError() {
+    public function testInternalServerError()
+    {
         $request = Request::create('/foo');
         $request->overrideGlobals();
 
@@ -83,5 +91,51 @@ class AppTest extends TestCase
         $response = ob_get_clean();
 
         $this->assertEquals('Internal Server Error', $response);
+    }
+
+    public function testPostHandler()
+    {
+        $request = Request::create('/foo');
+        $request->overrideGlobals();
+
+        $app = new App();
+        $app->get('/foo', function () {
+            $postHandler = function () {
+                $this->assertFalse($this->postHandlerCalled);
+                $this->postHandlerCalled = true;
+            };
+
+            return [new Response(), $postHandler];
+        });
+
+        ob_start();
+        $app->run();
+        ob_get_clean();
+
+        $this->assertTrue($this->postHandlerCalled);
+    }
+
+    public function testExceptionInPostHandlerIsSilentlyLogged()
+    {
+        $request = Request::create('/foo');
+        $request->overrideGlobals();
+
+        $app = new App();
+        $app->get('/foo', function () {
+            $postHandler = function () {
+                throw new \Exception('foobar');
+            };
+
+            return [new Response(), $postHandler];
+        });
+
+        ob_start();
+        $app->run();
+        ob_get_clean();
+
+        $errorLogs = $this->errorLogHandler->getErrorLogs();
+
+        $this->assertEquals(1, count($errorLogs));
+        $this->assertEquals('Exception in post handler: foobar', $errorLogs[0]);
     }
 }

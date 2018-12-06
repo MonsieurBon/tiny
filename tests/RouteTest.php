@@ -14,6 +14,6 @@ final class RouteTest extends TestCase
 
         $this->assertEquals('a', $route->getMethod());
         $this->assertEquals('b', $route->getRoute());
-        $this->assertEquals('c', $route->getCallable());
+        $this->assertEquals('c', $route->getHandler());
     }
 }

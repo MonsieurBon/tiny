@@ -4,8 +4,6 @@ namespace Tiny;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use Monolog\Formatter\LineFormatter;
-use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,14 +21,14 @@ class App
         $this->routes = [];
     }
 
-    public function get($route, $callable)
+    public function get($route, $requestHandler)
     {
-        $this->routes[] = new Route('GET', $route, $callable);
+        $this->routes[] = new Route('GET', $route, $requestHandler);
     }
 
-    public function post($route, $callable)
+    public function post($route, $requestHandler)
     {
-        $this->routes[] = new Route('POST', $route, $callable);
+        $this->routes[] = new Route('POST', $route, $requestHandler);
     }
 
     public function run()
@@ -40,7 +38,7 @@ class App
 
         $dispatcher = simpleDispatcher(function (RouteCollector $r) {
             foreach ($this->routes as $route) {
-                $r->addRoute($route->getMethod(), $route->getRoute(), $route->getCallable());
+                $r->addRoute($route->getMethod(), $route->getRoute(), $route->getHandler());
             }
         });
 
@@ -61,10 +59,16 @@ class App
                 break;
             default:
                 $accessLog->addInfo(sprintf('%s %s: 200 OK', $method, $uri));
-                $handler = $routeInfo[1];
+                $requestHandler = $routeInfo[1];
                 $request->attributes->add($routeInfo[2]);
                 try {
-                    $response = $handler($request);
+                    $return = $requestHandler($request);
+
+                    if (!is_array($return)) {
+                        $return = [$return];
+                    }
+
+                    [$response, $postHandler] = array_pad($return, 2, null);
                 } catch (\Exception $e) {
                     $errorLog->addError(sprintf('Exception in request handler: %s', $e->getMessage()), array('exception' => $e));
                     $response = new Response('Internal Server Error', 500);
@@ -73,5 +77,13 @@ class App
 
         $response->prepare($request);
         $response->send();
+
+        if (isset($postHandler) && is_callable($postHandler)) {
+            try {
+                $postHandler();
+            } catch (\Exception $e) {
+                $errorLog->addError(sprintf('Exception in post handler: %s', $e->getMessage()), array('exception' => $e));
+            }
+        }
     }
 }

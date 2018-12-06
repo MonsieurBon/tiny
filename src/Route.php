@@ -8,13 +8,13 @@ class Route
 {
     private $method;
     private $route;
-    private $callable;
+    private $handler;
 
-    public function __construct($method, $route, $callable)
+    public function __construct($method, $route, $handler)
     {
         $this->method = $method;
         $this->route = $route;
-        $this->callable = $callable;
+        $this->handler = $handler;
     }
 
     /**
@@ -36,8 +36,8 @@ class Route
     /**
      * @return \Closure
      */
-    public function getCallable()
+    public function getHandler()
     {
-        return $this->callable;
+        return $this->handler;
     }
 }
