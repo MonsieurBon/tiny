@@ -42,6 +42,7 @@ class App
             }
         });
 
+        /** @var Request $request */
         $request = Request::createFromGlobals();
         $method = $request->getMethod();
         $uri = $request->getPathInfo();
@@ -86,4 +87,5 @@ class App
             }
         }
     }
+
 }
